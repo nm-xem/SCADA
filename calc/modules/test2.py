@@ -2,7 +2,7 @@ def main (data):
     is_error = False
     error = ''
     result = 0
-    print(data)
+    print('!!!!!!!!!')
     try:
         result = 1 + 5
     except:
