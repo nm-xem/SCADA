@@ -7,7 +7,7 @@ try:
     """
         !!! УКАЗАТЬ НЕОБХОДИМЫЙ ИМПОРТ МОДУЛЕЙ !!!
     """
-    from modules import test1, test2
+    from modules import test1
 except ImportError:
     print ('Попытка импорта несуществующего модуля')
     error = True
@@ -15,7 +15,7 @@ try:
     """
         !!! УКАЗАТЬ СПИСОК ИМПОРТИРОВАННЫХ МОДУЛЕЙ !!!
     """
-    list_modules = [test1, test2]
+    list_modules = [test1]
 except NameError as ex:
     print (f'Модуль "{ex.args[0][6:len(ex.args[0])-16]}" не существует.')
     error = True
@@ -40,6 +40,7 @@ def create_dict_modules ():
                     'periodicity' : module.periodicity,
                     'autoupdate' : module.autoupdate,
                     'name_ru' : module.name_ru,
+                    'list_signals' : module.list_signals,
                 }
         except:
             print (f'Ошибка в создании словаря модулей.')

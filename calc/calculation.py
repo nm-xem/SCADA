@@ -1,4 +1,10 @@
-import time, threading, os
+import time, threading, os, sys
+
+current_dir = "calc"
+main_dir = os.path.dirname(os.path.abspath(__file__))[:-(len(current_dir)+1)]
+sys.path.append(f"{main_dir}")
+
+from secondary_functions import protocol_functions as pf
 
 class Calculation:
     def __init__ (self, name_ru, func_module, periodicity, name, autoupdate):
@@ -58,7 +64,7 @@ class Calculation:
         """
         self.current_try_start = 0
         self.result = {}
-        self.time_update_module = os.path.getmtime(f'./projects/обучение/tosser/modules/{self.name_module}.py')
+        self.time_update_module = os.path.getmtime(f'./projects/обучение/SCADA/calc/modules/{self.name_module}.py')
         self.need_update = False
         self.threads_stop = False
         self.check_update_module_name = f'update_{self.name_module}'
@@ -86,18 +92,18 @@ class Calculation:
         self.threads_stop = False
 
         if self.current_try_start > self.max_try_start:
-            print ('Превышено допустимое количество попыток старта модуля.')
+            pf.write_file_log(self.name_module,'Превышено допустимое количество попыток старта модуля')
             return 'error'
         else:
-            print (f'Запуск модуля "{self.name_module_ru}".')
+            pf.write_file_log(self.name_module, f'Запуск модуля "{self.name_module_ru}"')
             try:
                 status_start = self.creation_daemon_module()
                 if status_start == 'error':
-                    error_run (f'Ошибка запуска одного или нескольких потоков модуля "{self.name_module_ru}".')
+                    error_run (f'Ошибка запуска одного или нескольких потоков модуля "{self.name_module_ru}"')
             except:
-                error_run (f'Ошибка запуска модуля "{self.name_module_ru}".')
+                error_run (f'Ошибка запуска модуля "{self.name_module_ru}"')
             else:
-                print (f'Модуль "{self.name_module_ru}" успешно запущен.')
+                pf.write_file_log(self.name_module, f'Модуль "{self.name_module_ru}" успешно запущен')
                 self.current_try_start = 0
                 return 'ok'
         
@@ -108,14 +114,13 @@ class Calculation:
         def error_run (message):
             self.global_error_module = True
             self.threads_stop = True
-            print (message)
-            print (f'Ожидание остановки всех потоков модуля "{self.name_module_ru}".')
+            pf.write_file_log(self.name_module, message)
+            pf.write_file_log(self.name_module, f'Ожидание остановки всех потоков модуля "{self.name_module_ru}"')
             while not (self.is_calc_thread_stop and self.is_update_thread_stop and self.is_diag_thread_stop):
                 time.sleep(1)
             if self.periodicity_global_error < self.max_periodicity_global_error:
                 self.periodicity_global_error *= 2
-            print (f'Все потоки модуля "{self.name_module_ru}" остановлены.')
-            print (f'Следующая попытка запуска модуля "{self.name_module_ru}" через {self.periodicity_global_error} секунд.')
+            pf.write_file_log(self.name_module, f'Все потоки модуля "{self.name_module_ru}" остановлены.\nСледующая попытка запуска модуля "{self.name_module_ru}" через {self.periodicity_global_error} секунд')
             time.sleep(self.periodicity_global_error)
             self.run()
 
@@ -152,7 +157,7 @@ class Calculation:
         while True:
             if self.threads_stop or self.diag_thread_stop:
                 self.is_diag_thread_stop = True
-                print (f'Диагностический модуль "{self.name_module_ru}" завершён.')
+                pf.write_file_log(self.name_module, f'Диагностический модуль "{self.name_module_ru}" завершён')
                 break
 
             if not self.global_error_module:
@@ -166,10 +171,10 @@ class Calculation:
                             break
                     else:
                         self.global_error_module = True
-                        print (f'Глобальная ошибка модуля "{self.name_module_ru}".')
+                        pf.write_file_log(self.name_module, f'Глобальная ошибка модуля "{self.name_module_ru}"')
                     time.sleep(self.periodicity)
                 except:
-                    print (f'Ошибка выполнения диагностики модуля "{self.name_module_ru}".')
+                    pf.write_file_log(self.name_module, f'Ошибка выполнения диагностики модуля "{self.name_module_ru}"')
             else:
                 time.sleep(self.periodicity_global_error)
         
@@ -178,12 +183,12 @@ class Calculation:
         while True:
             if self.threads_stop or self.update_thread_stop:
                 self.is_update_thread_stop = True
-                print (f'Модуль обновления "{self.name_module_ru}" завершён.')
+                pf.write_file_log(self.name_module, f'Модуль обновления "{self.name_module_ru}" завершён')
                 break
 
-            if os.path.getmtime(f'./projects/обучение/tosser/modules/{self.name_module}.py') != self.time_update_module:
+            if os.path.getmtime(f'./projects/обучение/SCADA/calc/modules/{self.name_module}.py') != self.time_update_module:
                 self.need_update = True
-                print(f'Требуется обновление расчётной функции модуля "{self.name_module_ru}".')
+                pf.write_file_log(self.name_module, f'Требуется обновление расчётной функции модуля "{self.name_module_ru}"')
             time.sleep(1)
 
     # Функция выполнения расчётной функции модуля
@@ -193,7 +198,7 @@ class Calculation:
     def calculation (self):
         while True:
             if self.threads_stop or self.calc_thread_stop:
-                print (f'Расчётный модуль "{self.name_module_ru}" завершён.')
+                pf.write_file_log(self.name_module, f'Расчётный модуль "{self.name_module_ru}" завершён')
                 self.is_calc_thread_stop = True
                 break
 
@@ -217,6 +222,6 @@ class Calculation:
             else:
                 if self.periodicity_global_error < 16:
                     self.periodicity_global_error *= 2
-                print (f"Ожидание исправления ошибки {self.periodicity_global_error} секунд.")
+                pf.write_file_log(self.name_module, f'Ожидание исправления ошибки {self.periodicity_global_error} секунд')
                 time.sleep(self.periodicity_global_error)
-   
+
