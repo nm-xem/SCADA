@@ -4,16 +4,30 @@ from json import dumps as j_dumps
 from pickle import loads as p_loads
 from pickle import dumps as p_dumps
 
+"""
+    Возможна отправка неограниченного количества запросов на получение данных
+        результат выполнения - словарь с названием системы и словарём данных 
+    Возможна отправка ОДНОГО пакета данных dict_data_send по коду code_send
+"""
 class Connect_gateway ():
     def __init__ (self):
+        """
+            Конфигурационные переменные
+                ip_gateway - IP Шлюза по умолчанию
+                port_gateway - порт Шлюза по умолчанию
+                dict_codes_get - словарь названий систем и кодов запросов на получение данных
+                code_send - код на отправку данных
+                dict_data_get - словарь названий систем и принятых данных
+                dict_data_send - словарь названий систем и данных на отправку
+        """
         self.ip_gateway = '172.16.4.150'
         self.port_gateway = 9002
-        self.dict_codes_get = {
-            'IVS_1_analog' : '7001', 
-            'IVS_2_analog' : '7002'}
+        self.dict_codes_get = {}
+        self.code_send = ''
         self.dict_data_get = {}
         self.dict_data_send = {}
 
+    # Функция подключения к Шлюзу
     def connect_to_gateway (self):
         try:
             sockToServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
@@ -25,34 +39,13 @@ class Connect_gateway ():
         else:
             return sockToServer
         
-    def get_data_from_gateway (self):
-        while True:
-            sockToServer = self.connect_to_gateway()
-            if sockToServer == 'error':
-                time.sleep(0.5)
-            else:
-                for name_sistem, code in self.dict_codes_get.items():
-                    code_b = bytes(code, 'utf-8')
-                    sockToServer.sendall(code_b)
-                    data = self.get_data(sockToServer)
-                    self.dict_data_get[name_sistem] = j_loads(p_loads(data))
-                sockToServer.close()
-                time.sleep(1)
-
-    def get_data (sock):
-        result = b''
-        while True:
-            mes = sock.recv(4098)
-            if not mes:
-                break
-            result += mes
-        return result
-    
+    # Функция отправки пакета на Шлюз
     def send_data_to_gateway (self):
         while True:
             sockToServer = self.connect_to_gateway()
             if sockToServer == 'error':
                 time.sleep(0.5)
+                continue
             else:
                 try:
                     sockToServer.send(p_dumps(j_dumps([
@@ -61,8 +54,44 @@ class Connect_gateway ():
                 except:
                     print ('Не удалось отправить данные на Шлюз.')
                     time.sleep(0.5)
-                else:
-                    time.sleep(1)
+                    continue
+            time.sleep(1)
+
+    # Функция запроса данных от Шлюза
+    """
+        Результат выполнения:
+            словарь dict_data_get
+    """
+    def get_data_from_gateway (self):
+        while True:
+            sockToServer = self.connect_to_gateway()
+            if sockToServer == 'error':
+                time.sleep(0.5)
+                continue
+            else:
+                try:
+                    for name_sistem, code in self.dict_codes_get.items():
+                        code_b = bytes(code, 'utf-8')
+                        sockToServer.sendall(code_b)
+                        self.dict_data_get[name_sistem] = self.get_data(sockToServer)
+                    sockToServer.close()
+                except:
+                    print ('Не удалось отправить запрос на Шлюз для получения данных.')
+                    time.sleep(0.5)
+                    continue
+            time.sleep(1)
+
+    # Функция обработки получаемого пакета
+    def get_data (sock):
+        result = b''
+        while True:
+            mes = sock.recv(4098)
+            if not mes:
+                break
+            result += mes
+        return j_loads(p_loads(result))
+    
+
 
 
             
