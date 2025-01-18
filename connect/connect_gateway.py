@@ -1,16 +1,18 @@
 import  socket, time
 from json import loads as j_loads
+from json import dumps as j_dumps
 from pickle import loads as p_loads
+from pickle import dumps as p_dumps
 
 class Connect_gateway ():
     def __init__ (self):
         self.ip_gateway = '172.16.4.150'
         self.port_gateway = 9002
         self.dict_codes_get = {
-            'IVS_1_analog' : '7000', 
-            'IVS_2_analog' : '7001'}
+            'IVS_1_analog' : '7001', 
+            'IVS_2_analog' : '7002'}
         self.dict_data_get = {}
-        
+        self.dict_data_send = {}
 
     def connect_to_gateway (self):
         try:
@@ -45,5 +47,22 @@ class Connect_gateway ():
                 break
             result += mes
         return result
+    
+    def send_data_to_gateway (self):
+        while True:
+            sockToServer = self.connect_to_gateway()
+            if sockToServer == 'error':
+                time.sleep(0.5)
+            else:
+                try:
+                    sockToServer.send(p_dumps(j_dumps([
+                        '700', self.dict_data_send])))
+                    sockToServer.close()
+                except:
+                    print ('Не удалось отправить данные на Шлюз.')
+                    time.sleep(0.5)
+                else:
+                    time.sleep(1)
+
 
             

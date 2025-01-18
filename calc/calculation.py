@@ -64,7 +64,7 @@ class Calculation:
         """
         self.current_try_start = 0
         self.result = {}
-        self.time_update_module = os.path.getmtime(f'./projects/обучение/SCADA/calc/modules/{self.name_module}.py')
+        self.time_update_module = os.path.getmtime(f'{main_dir}/{current_dir}/modules/{self.name_module}.py')
         self.need_update = False
         self.threads_stop = False
         self.check_update_module_name = f'update_{self.name_module}'
@@ -186,7 +186,7 @@ class Calculation:
                 pf.write_file_log(self.name_module, f'Модуль обновления "{self.name_module_ru}" завершён')
                 break
 
-            if os.path.getmtime(f'./projects/обучение/SCADA/calc/modules/{self.name_module}.py') != self.time_update_module:
+            if os.path.getmtime(f'{main_dir}/{current_dir}/modules/{self.name_module}.py') != self.time_update_module:
                 self.need_update = True
                 pf.write_file_log(self.name_module, f'Требуется обновление расчётной функции модуля "{self.name_module_ru}"')
             time.sleep(1)

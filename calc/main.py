@@ -12,7 +12,7 @@ from secondary_functions import protocol_functions as pf
 def check_update_list_modules ():
     while True:
         try:
-            time_update_list_modules = os.path.getmtime(f'./projects/обучение/SCADA/calc/list_modules.py')
+            time_update_list_modules = os.path.getmtime(f'{main_dir}/{current_dir}/list_modules.py')
         except:
             pf.write_file_log(name_module,'Модуль "list_modules.py" был удалён')
         else:
@@ -76,7 +76,7 @@ def update_calc_modules (item, name_update):
     if item.global_error_module:
         item.global_error_module = False
         item.is_error = False
-    item.time_update_module = os.path.getmtime(f'./projects/обучение/SCADA/calc/modules/{name_update}.py')
+    item.time_update_module = os.path.getmtime(f'{main_dir}/{current_dir}/modules/{name_update}.py')
     pf.write_file_log(name_module,f'Расчётная функция модуля "{name_update}" обновлена')
 
 # Функция обновления данных, необходимых для расчёта, в модулях 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     name_module = 'main_module'
     list_examplу_module = []
     dict_signals = {}
-    time_import_list_modules = os.path.getmtime(f'./projects/обучение/SCADA/calc/list_modules.py')
+    time_import_list_modules = os.path.getmtime(f'{main_dir}/{current_dir}/list_modules.py')
     dict_modules = module_lm.create_dict_modules()
     dict_data = {
     '1' : 101,
