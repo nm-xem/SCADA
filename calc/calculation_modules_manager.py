@@ -20,6 +20,7 @@ class Calculation_modules_manager ():
                 list_examplу_module - список экземпляров модулей расчёта
                 dict_signals - словарь тэгов, необходимых для расчёта
                 dict_data - словарь данных от систем
+                threads_stop - флаг остановки потоков
         """
         self.main_dir = main_dir
         self.current_dir = current_dir
@@ -29,11 +30,19 @@ class Calculation_modules_manager ():
         self.list_examplу_module = []
         self.dict_signals = {}
         self.dict_data = {}
-
+        self.threads_stop = False
         self.create_list_examplу_module ()
-        threading.Thread (target=self.check_update, daemon=True).start()
-        threading.Thread (target=self.update_data_modules, daemon=True).start()
-        threading.Thread (target=self.check_update_dict_modules, daemon=True).start()
+
+    def run (self):
+        try:
+            threading.Thread (target=self.check_update, daemon=True).start()
+            threading.Thread (target=self.update_data_modules, daemon=True).start()
+            threading.Thread (target=self.check_update_dict_modules, daemon=True).start()
+        except:
+            self.threads_stop = True
+            pf.write_file_log(self.name_module,f'Не удалось запустить основные потоки')
+        else:
+            pf.write_file_log(self.name_module,f'Все основные потоки запущены')
 
     # Функция заполнения списка модулей и тэгов и запуск
     def create_list_examplу_module (self):
@@ -58,6 +67,9 @@ class Calculation_modules_manager ():
     def check_update_dict_modules (self):
         pf.write_file_log(self.name_module,f'Запущен модуль"check_update_dict_modules"')
         while True:
+            if self.threads_stop:
+                pf.write_file_log(self.name_module, f'Поток "check_update_dict_modules" завершён')
+                break
             try:
                 time_update_dict_modules = os.path.getmtime(f'{main_dir}/{current_dir}/list_modules.py')
             except:
@@ -103,6 +115,9 @@ class Calculation_modules_manager ():
     def check_update (self):
         pf.write_file_log(self.name_module,f'Запущен модуль"check_update"')
         while True:
+            if self.threads_stop:
+                pf.write_file_log(self.name_module, f'Поток "check_update" завершён')
+                break
             for item in self.list_examplу_module:
                 if item.need_update:
                     name_update = item.name_module
@@ -130,6 +145,9 @@ class Calculation_modules_manager ():
     def update_data_modules (self):
         pf.write_file_log(self.name_module,f'Запущен модуль"update_data_modules"')
         while True:
+            if self.threads_stop:
+                pf.write_file_log(self.name_module, f'Поток "update_data_modules" завершён')
+                break
             for item in self.list_examplу_module:
                 name = item.name_module
                 data = {}
