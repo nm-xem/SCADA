@@ -1,15 +1,21 @@
-import importlib
-# Функция создания списка модулей расчёта и импорта этих модулей
-# def import_calculation_modules ():
+import importlib, os, sys
+
+current_dir = "calc"
+main_dir = os.path.dirname(os.path.abspath(__file__))[:-(len(current_dir)+1)]
+sys.path.append(f"{main_dir}")
+
+from secondary_functions import protocol_functions as pf
+
 error = False
 list_modules = []
+name_module = 'list_modules'
 try:
     """
         !!! УКАЗАТЬ НЕОБХОДИМЫЙ ИМПОРТ МОДУЛЕЙ !!!
     """
     from modules import test1
 except ImportError:
-    print ('Попытка импорта несуществующего модуля')
+    pf.write_file_log(name_module,f'Попытка импорта несуществующего модуля')
     error = True
 try:
     """
@@ -17,16 +23,17 @@ try:
     """
     list_modules = [test1]
 except NameError as ex:
-    print (f'Модуль "{ex.args[0][6:len(ex.args[0])-16]}" не существует.')
+    pf.write_file_log(name_module,f'Модуль "{ex.args[0][6:len(ex.args[0])-16]}" не существует')
     error = True
-# return error, list_modules
 
 def update_dict_modules ():
     for module in list_modules:
-        importlib.reload(module)
+        try:
+            importlib.reload(module)
+        except:
+            pf.write_file_log(name_module,f'Ошибка в синтаксисе модуля {module.__name__[8:]}')
     result = create_dict_modules ()
     return result
-
 
 # Функция создания словаря модулей с их описанием и внутренней функцией
 def create_dict_modules ():
@@ -43,7 +50,7 @@ def create_dict_modules ():
                     'list_signals' : module.list_signals,
                 }
         except:
-            print (f'Ошибка в создании словаря модулей.')
+            pf.write_file_log(name_module,f'Ошибка в создании словаря модулей')
             return 'error'
         else:
             return dict_modules
