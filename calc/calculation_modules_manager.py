@@ -12,11 +12,13 @@ class Calculation_modules_manager ():
     def __init__ (self):
         """
             Служебные переменные
+                main_dir - домашняя директория
+                current_dir - текущая директория
+                time_import_dict_modules - время импортирования словаря модулей
+                dict_modules - словарь модулей и данных о них из list_modules.py
                 name_module - название модуля
                 list_examplу_module - список экземпляров модулей расчёта
                 dict_signals - словарь тэгов, необходимых для расчёта
-                dict_modules - словарь модулей и данных о них из list_modules.py
-                time_import_list_modules - время импортирования словаря модулей
                 dict_data - словарь данных от систем
         """
         self.main_dir = main_dir
@@ -26,21 +28,9 @@ class Calculation_modules_manager ():
         self.name_module = 'Calculation_modules_manager'
         self.list_examplу_module = []
         self.dict_signals = {}
-        self.dict_data = {
-            '1' : 101,
-            '2' : 102,
-            '3' : 103,
-            '4' : 104,
-            '5' : 105,
-            '6' : 106,
-            '7' : 107,
-            '8' : 108,
-            '9' : 109,
-            '10' : 110,
-        }
+        self.dict_data = {}
 
         self.create_list_examplу_module ()
-
         threading.Thread (target=self.check_update, daemon=True).start()
         threading.Thread (target=self.update_data_modules, daemon=True).start()
         threading.Thread (target=self.check_update_dict_modules, daemon=True).start()
@@ -66,7 +56,7 @@ class Calculation_modules_manager ():
 
     # Функция проверки необходимости обновления списка модулей
     def check_update_dict_modules (self):
-        print("Запущен модуль")
+        pf.write_file_log(self.name_module,f'Запущен модуль"check_update_dict_modules"')
         while True:
             try:
                 time_update_dict_modules = os.path.getmtime(f'{main_dir}/{current_dir}/list_modules.py')
@@ -111,6 +101,7 @@ class Calculation_modules_manager ():
 
     # Функция проверки необходимости обновления расчётных модулей
     def check_update (self):
+        pf.write_file_log(self.name_module,f'Запущен модуль"check_update"')
         while True:
             for item in self.list_examplу_module:
                 if item.need_update:
@@ -137,6 +128,7 @@ class Calculation_modules_manager ():
 
     # Функция обновления данных, необходимых для расчёта, в модулях 
     def update_data_modules (self):
+        pf.write_file_log(self.name_module,f'Запущен модуль"update_data_modules"')
         while True:
             for item in self.list_examplу_module:
                 name = item.name_module
