@@ -11,7 +11,7 @@ def write_file_log (name_sistem, mes):
     time_mes, date = get_time_mes()
     try:
         with open(f'{dir}/logs/{date}_{name_sistem}.txt', 'a', encoding = 'utf-8') as file_log:
-            
+            print(f'{time_mes}\t{mes}.\n')
             file_log.write(f'{time_mes}\t{mes}.\n')
     except:
         print (f'Не удалось сделать запись в файл /logs/{date}_{name_sistem}.txt')
