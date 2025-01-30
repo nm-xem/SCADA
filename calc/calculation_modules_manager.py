@@ -32,12 +32,21 @@ class Calculation_modules_manager ():
         self.dict_data = {}
         self.threads_stop = False
         self.create_list_examplу_module ()
+        self.dict_status_daemons = {}
+        self.times_daemons = {'check_update' : 0,
+                              'update_data_modules' : 0,
+                              'check_update_dict_modules' : 0,
+                              'diagnostic_threads' : 0}
+        self.list_daemons = [threading.Thread (target=self.check_update, daemon=True, name='check_update'),
+                             threading.Thread (target=self.update_data_modules, daemon=True, name='update_data_modules'),
+                             threading.Thread (target=self.check_update_dict_modules, daemon=True, name='check_update_dict_modules'),
+                             threading.Thread (target=self.diagnostic_threads, daemon=True, name='diagnostic_threads')]
 
     def run (self):
         try:
-            threading.Thread (target=self.check_update, daemon=True).start()
-            threading.Thread (target=self.update_data_modules, daemon=True).start()
-            threading.Thread (target=self.check_update_dict_modules, daemon=True).start()
+            for daemon in self.list_daemons:
+                if not daemon.is_alive():
+                    daemon.start()
         except:
             self.threads_stop = True
             pf.write_file_log(self.name_module,f'Не удалось запустить основные потоки')
@@ -47,7 +56,7 @@ class Calculation_modules_manager ():
     # Функция заполнения списка модулей и тэгов и запуск
     def create_list_examplу_module (self):
         for name, module in self.dict_modules.items():
-            self.list_examplу_module.append(Calculation(module['name_ru'], module['function'], module['periodicity'], name, module['autoupdate']))
+            self.list_examplу_module.append(Calculation(module['function'], module['periodicity'], name, module['autoupdate']))
             self.dict_signals[name] = module['list_signals']
         
         message = f'Запущены все расчётные модули, кроме:'
@@ -67,6 +76,8 @@ class Calculation_modules_manager ():
     def check_update_dict_modules (self):
         pf.write_file_log(self.name_module,f'Запущен модуль"check_update_dict_modules"')
         while True:
+            self.times_daemons['check_update_dict_modules'] = round(time.time())
+            self.time_in_check_update_dict_modules = time.time()
             if self.threads_stop:
                 pf.write_file_log(self.name_module, f'Поток "check_update_dict_modules" завершён')
                 break
@@ -96,7 +107,7 @@ class Calculation_modules_manager ():
     def run_new_modules (self, temp_lm):
         for name in temp_lm:
             if not name in self.dict_modules:
-                self.list_examplу_module.append(Calculation(temp_lm[name]['name_ru'], temp_lm[name]['function'], temp_lm[name]['periodicity'], name, temp_lm[name]['autoupdate']))
+                self.list_examplу_module.append(Calculation(temp_lm[name]['function'], temp_lm[name]['periodicity'], name, temp_lm[name]['autoupdate']))
                 self.list_examplу_module[-1].run()
                 self.dict_signals[name] = temp_lm[name]['list_signals']
                 pf.write_file_log(self.name_module,f'Добавлен модуль "{name}"')
@@ -115,6 +126,8 @@ class Calculation_modules_manager ():
     def check_update (self):
         pf.write_file_log(self.name_module,f'Запущен модуль"check_update"')
         while True:
+            self.times_daemons['check_update'] = round(time.time())
+            self.time_in_check_update = time.time()
             if self.threads_stop:
                 pf.write_file_log(self.name_module, f'Поток "check_update" завершён')
                 break
@@ -132,7 +145,6 @@ class Calculation_modules_manager ():
         item.func_module = self.dict_modules[name_update]['function']
         item.periodicity = self.dict_modules[name_update]['periodicity']
         item.autoupdate = self.dict_modules[name_update]['autoupdate']
-        item.name_module_ru = self.dict_modules[name_update]['name_ru']
         self.dict_signals[name_update] = self.dict_modules[name_update]['list_signals']
         item.need_update = False
         if item.global_error_module:
@@ -145,6 +157,8 @@ class Calculation_modules_manager ():
     def update_data_modules (self):
         pf.write_file_log(self.name_module,f'Запущен модуль"update_data_modules"')
         while True:
+            self.times_daemons['update_data_modules'] = round(time.time())
+            self.time_in_update_data_modules = time.time()
             if self.threads_stop:
                 pf.write_file_log(self.name_module, f'Поток "update_data_modules" завершён')
                 break
@@ -157,4 +171,24 @@ class Calculation_modules_manager ():
                 except:
                     pf.write_file_log(self.name_module,f'Не удалось создать словарь данных для модуля {name}')
                 item.data = data
+            time.sleep(1)
+
+    def diagnostic_threads (self):
+        while True:
+            self.times_daemons['diagnostic_threads'] = round(time.time())
+            if self.threads_stop:
+                pf.write_file_log(self.name_module, f'Модуль диагностики "{self.name_module}" завершён')
+                break
+            for daemon in self.list_daemons:
+                daemon_name = daemon.getName()
+                daemon_is_alive = daemon.is_alive()
+                if daemon_is_alive:
+                    if time.time() - self.times_daemons[daemon_name] > 5:
+                        status = 'Поток завис'
+                    else:
+                        status = 'Поток работает'
+                else:
+                    status = 'Поток нештатно завершил работу'
+                self.dict_status_daemons[daemon_name] = {'status' : status, 'time' : time.strftime("%y.%m.%d %H:%M:%S", time.localtime(self.times_daemons[daemon_name]))}
+            # print(self.dict_status_daemons)
             time.sleep(1)
