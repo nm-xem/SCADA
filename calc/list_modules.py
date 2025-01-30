@@ -13,7 +13,7 @@ try:
     """
         !!! УКАЗАТЬ НЕОБХОДИМЫЙ ИМПОРТ МОДУЛЕЙ !!!
     """
-    from modules import test1
+    from modules import test1, test2
 except ImportError:
     pf.write_file_log(name_module,f'Попытка импорта несуществующего модуля')
     error = True
@@ -21,7 +21,7 @@ try:
     """
         !!! УКАЗАТЬ СПИСОК ИМПОРТИРОВАННЫХ МОДУЛЕЙ !!!
     """
-    list_modules = [test1]
+    list_modules = [test1, test2]
 except NameError as ex:
     pf.write_file_log(name_module,f'Модуль "{ex.args[0][6:len(ex.args[0])-16]}" не существует')
     error = True

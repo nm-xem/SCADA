@@ -127,7 +127,7 @@ class Calculation:
     # Функция проверки изменения файла модуля расчёта
     def check_update_module (self):
         while True:
-            self.times_daemons[self.check_update_module_name] = time.time()
+            self.times_daemons[self.check_update_module_name] = round(time.time())
             if self.threads_stop or self.update_thread_stop:
                 pf.write_file_log(self.name_module, f'Модуль обновления "{self.name_module}" завершён')
                 break
@@ -143,7 +143,7 @@ class Calculation:
     """
     def calculation (self):
         while True:
-            self.times_daemons[self.calculation_module_name] = time.time()
+            self.times_daemons[self.calculation_module_name] = round(time.time())
             if self.threads_stop or self.calc_thread_stop:
                 pf.write_file_log(self.name_module, f'Расчётный модуль "{self.name_module}" завершён')
                 break
@@ -165,7 +165,7 @@ class Calculation:
 
     def diagnostic_threads (self):
         while True:
-            self.times_daemons[self.diagnostic_threads_name] = time.time()
+            self.times_daemons[self.diagnostic_threads_name] = round(time.time())
             if self.threads_stop:
                 pf.write_file_log(self.name_module, f'Модуль диагностики "{self.name_module}" завершён')
                 break
@@ -179,8 +179,8 @@ class Calculation:
                         status = 'Поток работает'
                 else:
                     status = 'Поток нештатно завершил работу'
-                self.dict_status_daemons[daemon_name] = status
-            print(self.dict_status_daemons)
+                self.dict_status_daemons[daemon_name] = {'status' : status, 'time' : time.strftime("%y.%m.%d %H:%M:%S", time.localtime(self.times_daemons[daemon_name]))}
+            # print(self.dict_status_daemons)
             time.sleep(1)
 
 
