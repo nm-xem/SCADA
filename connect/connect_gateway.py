@@ -1,8 +1,14 @@
-import  socket, time
+import  socket, time, os, sys, threading
 from json import loads as j_loads
 from json import dumps as j_dumps
 from pickle import loads as p_loads
 from pickle import dumps as p_dumps
+
+current_dir = "connect"
+main_dir = os.path.dirname(os.path.abspath(__file__))[:-(len(current_dir)+1)]
+sys.path.append(f"{main_dir}")
+
+from secondary_functions import protocol_functions as pf
 
 """
     Возможна отправка неограниченного количества запросов на получение данных
@@ -13,19 +19,33 @@ class Connect_gateway ():
     def __init__ (self):
         """
             Конфигурационные переменные
+                name_module - название модуля
                 ip_gateway - IP Шлюза по умолчанию
                 port_gateway - порт Шлюза по умолчанию
                 dict_codes_get - словарь названий систем и кодов запросов на получение данных
                 code_send - код на отправку данных
                 dict_data_get - словарь названий систем и принятых данных
                 dict_data_send - словарь названий систем и данных на отправку
+                threads_stop - флаг остановки потоков
         """
+        self.name_module = 'Connect_gateway'
         self.ip_gateway = '172.16.4.150'
         self.port_gateway = 9002
         self.dict_codes_get = {}
         self.code_send = ''
         self.dict_data_get = {}
         self.dict_data_send = {}
+        self.threads_stop = False
+
+    def run (self):
+        try:
+            threading.Thread (target=self.send_data_to_gateway, daemon=True).start()
+            threading.Thread (target=self.get_data_from_gateway, daemon=True).start()
+        except:
+            self.threads_stop = True
+            pf.write_file_log(self.name_module,f'Не удалось запустить основные потоки')
+        else:
+            pf.write_file_log(self.name_module,f'Все основные потоки запущены')
 
     # Функция подключения к Шлюзу
     def connect_to_gateway (self):
